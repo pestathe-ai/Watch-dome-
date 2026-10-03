@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Orologi — Gestionale</title>
+<style>
+:root{
+  --bg:#eef1ee; --bg-elev:#ffffff; --text:#1f2420; --text-dim:#5b6560;
+  --accent:#a67c27; --accent-soft:#e8dcc0; --secondary:#2f5c5c;
+  --pos:#3f7d52; --neg:#b23a3a; --border:#d8ddd6;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14171c; --bg-elev:#1c2027; --text:#e7e4d8; --text-dim:#9aa39c;
+    --accent:#c9a227; --accent-soft:#3a3220; --secondary:#5b9a96;
+    --pos:#5fbf7c; --neg:#e0685f; --border:#2c313a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14171c; --bg-elev:#1c2027; --text:#e7e4d8; --text-dim:#9aa39c;
+  --accent:#c9a227; --accent-soft:#3a3220; --secondary:#5b9a96;
+  --pos:#5fbf7c; --neg:#e0685f; --border:#2c313a;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+*{box-sizing:border-box;}
+body{
+  margin:0; height:100%; background:var(--bg); color:var(--text);
+  font-family:-apple-system,system-ui,"Segoe UI",sans-serif;
+  display:flex; flex-direction:column;
+}
+h1,h2,h3{font-family:Georgia,'Times New Roman',serif; font-weight:600; margin:0 0 .4rem;}
+header{
+  padding:calc(.9rem + env(safe-area-inset-top,0px)) 1.1rem .9rem;
+  background:var(--bg-elev); border-bottom:1px solid var(--border);
+}
+header h1{font-size:1.3rem; color:var(--text);}
+header .sub{font-size:.8rem; color:var(--text-dim);}
+main{flex:1; overflow-y:auto; padding:1rem 1rem 5.5rem;}
+.section{display:none;}
+.section.active{display:block;}
+.card{
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:10px;
+  padding:.85rem .95rem; margin-bottom:.65rem; cursor:pointer;
+}
+.card .row{display:flex; justify-content:space-between; align-items:baseline; gap:.5rem;}
+.card .title{font-weight:600; font-size:1.02rem;}
+.card .meta{font-size:.8rem; color:var(--text-dim); margin-top:.2rem;}
+.pill{font-size:.72rem; padding:.15rem .5rem; border-radius:20px; background:var(--accent-soft); color:var(--accent); white-space:nowrap;}
+.amount{font-weight:600;}
+.amount.pos{color:var(--pos);}
+.amount.neg{color:var(--neg);}
+.empty{color:var(--text-dim); font-size:.9rem; text-align:center; padding:2rem 1rem; line-height:1.5;}
+.fab{
+  position:fixed; right:1.1rem; bottom:calc(4.6rem + env(safe-area-inset-bottom,0px));
+  width:3.1rem; height:3.1rem; border-radius:50%; background:var(--accent); color:#fff;
+  border:none; font-size:1.6rem; box-shadow:0 4px 14px rgba(0,0,0,.25); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; line-height:1;
+}
+nav{
+  position:fixed; bottom:0; left:0; right:0; background:var(--bg-elev); border-top:1px solid var(--border);
+  display:flex; padding-bottom:env(safe-area-inset-bottom,0px);
+}
+nav button{
+  flex:1; background:none; border:none; padding:.55rem .2rem .6rem; font-size:.68rem;
+  color:var(--text-dim); display:flex; flex-direction:column; align-items:center; gap:.2rem; cursor:pointer;
+}
+nav button .ic{font-size:1.15rem;}
+nav button.active{color:var(--accent);}
+.overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; z-index:10;
+}
+.overlay.show{display:flex;}
+.sheet{
+  background:var(--bg-elev); width:100%; max-height:88vh; overflow-y:auto;
+  border-radius:16px 16px 0 0; padding:1.1rem 1.1rem calc(1.4rem + env(safe-area-inset-bottom,0px));
+}
+.sheet h3{margin-bottom:.9rem;}
+label{display:block; font-size:.78rem; color:var(--text-dim); margin:.7rem 0 .25rem;}
+input,select{
+  width:100%; padding:.6rem .65rem; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); font-size:.95rem;
+}
+.btnrow{display:flex; gap:.6rem; margin-top:1.3rem;}
+button.primary{
+  flex:1; background:var(--accent); color:#fff; border:none; border-radius:9px; padding:.75rem; font-size:.95rem; cursor:pointer;
+}
+button.ghost{
+  flex:1; background:none; color:var(--text-dim); border:1px solid var(--border); border-radius:9px; padding:.75rem; font-size:.9rem; cursor:pointer;
+}
+button.danger{background:none; color:var(--neg); border:1px solid var(--neg); border-radius:9px; padding:.65rem; font-size:.85rem; cursor:pointer; margin-top:.9rem; width:100%;}
+a.tracklink{color:var(--secondary); font-size:.82rem;}
+table{width:100%; border-collapse:collapse; font-size:.88rem;}
+table th,table td{text-align:left; padding:.4rem .3rem; border-bottom:1px solid var(--border);}
+table th{color:var(--text-dim); font-weight:500; font-size:.75rem;}
+.stat-block{margin-bottom:1.4rem;}
+.stat-total{display:flex; justify-content:space-between; padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.92rem;}
+.stat-total.final{font-weight:700; font-size:1.05rem; border-bottom:none; margin-top:.3rem; color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header style="display:flex;justify-content:space-between;align-items:flex-start;">
+  <div>
+    <h1>⌚ Orologi</h1>
+    <div class="sub" id="headerSub">—</div>
+  </div>
+  <button onclick="openSettings()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-dim);padding:.2rem;">⚙️</button>
+</header>
+
+<main>
+  <section class="section" id="sec-acquisti">
+    <div id="listAcquisti"></div>
+  </section>
+  <section class="section" id="sec-vendite">
+    <div id="listVendite"></div>
+  </section>
+  <section class="section" id="sec-spese">
+    <div id="listSpese"></div>
+  </section>
+  <section class="section" id="sec-ordini">
+    <div id="listOrdini"></div>
+  </section>
+  <section class="section" id="sec-profili">
+    <div id="listProfili"></div>
+  </section>
+  <section class="section" id="sec-stats">
+    <div id="statsBody"></div>
+  </section>
+</main>
+
+<button class="fab" id="fab">+</button>
+
+<nav>
+  <button data-tab="acquisti" class="active"><span class="ic">🛒</span>Acquisti</button>
+  <button data-tab="vendite"><span class="ic">💰</span>Vendite</button>
+  <button data-tab="spese"><span class="ic">🧾</span>Spese</button>
+  <button data-tab="ordini"><span class="ic">📦</span>Ordini</button>
+  <button data-tab="profili"><span class="ic">👤</span>Profili</button>
+  <button data-tab="stats"><span class="ic">📊</span>Stats</button>
+</nav>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const store = {
+  get(k,d){ try{const v=localStorage.getItem(k); return v?JSON.parse(v):d;}catch(e){return d;} },
+  set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+};
+let watches = store.get('w_watches',[]);
+let profiles = store.get('w_profiles',[]);
+let expenses = store.get('w_expenses',[]);
+let orders = store.get('w_orders',[]);
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const eur = n => new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n||0);
+const dfmt = d => d ? new Date(d).toLocaleDateString('it-IT') : '—';
+let cloudDb=null, mainDoc=null, saving=false, pendingSave=false;
+function persistLocal(){ store.set('w_watches',watches); store.set('w_profiles',profiles); store.set('w_expenses',expenses); store.set('w_orders',orders); }
+async function persist(){
+  persistLocal();
+  if(!mainDoc) return;
+  if(saving){ pendingSave=true; return; }
+  saving=true;
+  try{ await mainDoc.set({watches,profiles,expenses,orders}); }
+  catch(e){ console.error('Salvataggio cloud fallito', e); }
+  saving=false;
+  if(pendingSave){ pendingSave=false; persist(); }
+}
+const save = { w:persist, p:persist, e:persist, o:persist };
+async function initCloud(){
+  try{ cloudDb = await claude.use('db'); }catch(e){ cloudDb=null; }
+  if(!cloudDb){ runSeedImport(); renderAll(); return; }
+  mainDoc = cloudDb.doc('data/main');
+  try{
+    const snap = await mainDoc.get();
+    if(snap.exists){
+      const d = snap.data()||{};
+      watches=d.watches||[]; profiles=d.profiles||[]; expenses=d.expenses||[]; orders=d.orders||[];
+    } else if(watches.length||profiles.length||expenses.length||orders.length){
+      await mainDoc.set({watches,profiles,expenses,orders});
+    }
+    runSeedImport();
+    mainDoc.onSnapshot(snap=>{
+      if(!snap.exists || snap.metadata.hasPendingWrites) return;
+      const d = snap.data()||{};
+      watches=d.watches||[]; profiles=d.profiles||[]; expenses=d.expenses||[]; orders=d.orders||[];
+      persistLocal(); renderAll();
+    });
+  }catch(e){ console.error('Cloud non disponibile, uso solo il dispositivo', e); runSeedImport(); }
+  renderAll();
+}
+const profName = id => (profiles.find(p=>p.id===id)||{}).name || '—';
+const platforms = ['Vinted','eBay','Subito','Chrono24','A mano','Instagram','Facebook Marketplace','Negozio fisico','Non specificato'];
+const platformsDatalist = `<datalist id="platformsList">${platforms.map(p=>`<option value="${p}">`).join('')}</datalist>`;
+
+let curTab='acquisti';
+let _confirmAction = null;
+function askConfirm(msg, action){
+  _confirmAction = action;
+  openSheet(`
+    <h3>Conferma eliminazione</h3>
+    <p style="font-size:.9rem;line-height:1.5;color:var(--text-dim);">${msg}</p>
+    <div class="btnrow">
+      <button class="ghost" onclick="_confirmAction=null;closeSheet();">Annulla</button>
+      <button class="primary" style="background:var(--neg);" onclick="runConfirmAction()">Elimina</button>
+    </div>
+  `);
+}
+function runConfirmAction(){ const a=_confirmAction; _confirmAction=null; closeSheet(); if(a) a(); }
+function toast(msg, ms=4500){
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;left:50%;bottom:calc(5.4rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:.75rem 1.1rem;border-radius:10px;font-size:.85rem;max-width:88vw;text-align:center;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.3);line-height:1.4;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.display='none'; }, ms);
+}
+let selMode = {acquisti:false, vendite:false, spese:false, ordini:false};
+let selIds = {acquisti:new Set(), vendite:new Set(), spese:new Set(), ordini:new Set()};
+function toggleSelMode(tab){ selMode[tab]=!selMode[tab]; selIds[tab].clear(); renderAll(); }
+function toggleSel(tab,id){ const s=selIds[tab]; if(s.has(id)) s.delete(id); else s.add(id); renderAll(); }
+function deleteSelected(tab){
+  const ids = selIds[tab]; if(!ids.size) return;
+  askConfirm(`Eliminare ${ids.size} elementi selezionati? L'operazione non è reversibile.`, ()=>{
+    if(tab==='acquisti'||tab==='vendite'){ watches = watches.filter(w=>!ids.has(w.id)); save.w(); }
+    else if(tab==='spese'){ expenses = expenses.filter(e=>!ids.has(e.id)); save.e(); }
+    else if(tab==='ordini'){ orders = orders.filter(o=>!ids.has(o.id)); save.o(); }
+    selIds[tab].clear(); selMode[tab]=false; renderAll();
+  });
+}
+function selToolbar(tab){
+  const n = selIds[tab].size;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">
+    <button onclick="toggleSelMode('${tab}')" style="background:none;border:none;color:var(--secondary);font-size:.85rem;cursor:pointer;padding:.2rem 0;">${selMode[tab]?'Annulla selezione':'Seleziona'}</button>
+    ${selMode[tab] && n>0 ? `<button onclick="deleteSelected('${tab}')" style="background:none;border:1px solid var(--neg);color:var(--neg);border-radius:8px;padding:.35rem .8rem;font-size:.82rem;">Elimina (${n})</button>`:''}
+  </div>`;
+}
+function checkDot(tab,id){
+  const on = selIds[tab].has(id);
+  return `<span style="width:1.15rem;height:1.15rem;border-radius:50%;border:2px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent)':'transparent'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:.6rem;">${on?'<span style="color:#fff;font-size:.7rem;">✓</span>':''}</span>`;
+}
+function switchTab(t){
+  curTab=t;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===t));
+  document.getElementById('fab').style.display = (t==='stats') ? 'none':'flex';
+  renderAll();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+function openSheet(html){ document.getElementById('sheet').innerHTML=html; document.getElementById('overlay').classList.add('show'); }
+function closeSheet(){ document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').onclick = e=>{ if(e.target.id==='overlay') closeSheet(); };
+
+function profileOptions(sel){
+  if(!profiles.length) return `<option value="">Nessun profilo — creane uno</option>`;
+  return profiles.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${p.name}</option>`).join('');
+}
+
+// ---------- ACQUISTI ----------
+function renderAcquisti(){
+  const list = watches.filter(w=>w.status!=='sold');
+  const el = document.getElementById('listAcquisti');
+  if(!list.length){ el.innerHTML='<div class="empty">Nessun orologio in acquisto.<br>Tocca + per aggiungerne uno.</div>'; return; }
+  const sm = selMode.acquisti;
+  el.innerHTML = selToolbar('acquisti') + list.map(w=>`
+    <div class="card" onclick="${sm?`toggleSel('acquisti','${w.id}')`:`editWatch('${w.id}')`}">
+      <div class="row"><span style="display:flex;align-items:center;min-width:0;">${sm?checkDot('acquisti',w.id):''}<span class="title">${w.name}</span></span><span class="amount">${eur(w.purchasePrice)}</span></div>
+      <div class="meta">${w.purchasePlatform} · ${profName(w.buyerProfileId)} · ${dfmt(w.purchaseDate)}</div>
+      ${sm?'':`<div class="btnrow" style="margin-top:.6rem;">
+        <button class="primary" onclick="event.stopPropagation();openSaleForm('${w.id}')">Segna come venduto</button>
+      </div>`}
+    </div>`).join('');
+}
+function watchForm(w){
+  const isNew = !w;
+  w = w || {name:'',purchasePlatform:platforms[0],purchasePrice:'',buyerProfileId:profiles[0]?.id||'',purchaseDate:new Date().toISOString().slice(0,10)};
+  return `
+    <h3>${isNew?'Nuovo acquisto':'Modifica acquisto'}</h3>
+    <label>Modello orologio</label><input id="f-name" value="${w.name}" placeholder="Es. Seiko SKX007">
+    <label>Piattaforma di acquisto</label><input id="f-plat" list="platformsList" value="${w.purchasePlatform}">${platformsDatalist}
+    <label>Prezzo di acquisto (€)</label><input id="f-price" type="number" step="0.01" value="${w.purchasePrice}">
+    <label>Profilo acquirente</label><select id="f-prof">${profileOptions(w.buyerProfileId)}</select>
+    <label>Data acquisto</label><input id="f-date" type="date" value="${w.purchaseDate}">
+    <div class="btnrow">
+      <button class="ghost" onclick="closeSheet()">Annulla</button>
+      <button class="primary" onclick="saveWatch('${isNew?'':w.id}')">Salva</button>
+    </div>
+    ${!isNew?`<button class="danger" onclick="deleteWatch('${w.id}')">Elimina orologio</button>`:''}
+  `;
+}
+function newWatch(){ openSheet(watchForm(null)); }
+function editWatch(id){ openSheet(watchForm(watches.find(w=>w.id===id))); }
+function saveWatch(id){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){ toast('Inserisci il modello.'); return; }
+  const data = {
+    name, purchasePlatform:document.getElementById('f-plat').value.trim()||'Non specificato',
+    purchasePrice:parseFloat(document.getElementById('f-price').value)||0,
+    buyerProfileId:document.getElementById('f-prof').value,
+    purchaseDate:document.getElementById('f-date').value
+  };
+  if(id){ Object.assign(watches.find(w=>w.id===id), data); }
+  else { watches.push({id:uid(), status:'stock', ...data}); }
+  save.w(); closeSheet(); renderAll();
+}
+function deleteWatch(id){
+  askConfirm('Eliminare questo orologio e i suoi dati di vendita?', ()=>{
+    watches = watches.filter(w=>w.id!==id); save.w(); renderAll();
+  });
+}
+function openSaleForm(id){
+  const w = watches.find(x=>x.id===id);
+  openSheet(`
+    <h3>Vendita — ${w.name}</h3>
+    <label>Piattaforma di vendita</label><input id="s-plat" list="platformsList" value="${w.salePlatform||''}">${platformsDatalist}
+    <label>Prezzo di vendita (€)</label><input id="s-price" type="number" step="0.01">
+    <label>Profilo venditore</label><select id="s-prof">${profileOptions(w.buyerProfileId)}</select>
+    <label>Data vendita</label><input id="s-date" type="date" value="${new Date().toISOString().slice(0,10)}">
+    <div class="btnrow">
+      <button class="ghost" onclick="closeSheet()">Annulla</button>
+      <button class="primary" onclick="confirmSale('${id}')">Conferma vendita</button>
+    </div>
+  `);
+}
+function confirmSale(id){
+  const w = watches.find(x=>x.id===id);
+  w.status='sold';
+  w.salePlatform=document.getElementById('s-plat').value.trim()||'Non specificato';
+  w.salePrice=parseFloat(document.getElementById('s-price').value)||0;
+  w.sellerProfileId=document.getElementById('s-prof').value;
+  w.saleDate=document.getElementById('s-date').value;
+  save.w(); closeSheet(); switchTab('vendite');
+}
+
+// ---------- VENDITE ----------
+function expensesFor(watchId){ return expenses.filter(e=>e.watchId===watchId).reduce((s,e)=>s+e.amount,0); }
+function renderVendite(){
+  const list = watches.filter(w=>w.status==='sold');
+  const el = document.getElementById('listVendite');
+  if(!list.length){ el.innerHTML='<div class="empty">Nessuna vendita ancora.</div>'; return; }
+  const sm = selMode.vendite;
+  el.innerHTML = selToolbar('vendite') + list.map(w=>{
+    const exp = expensesFor(w.id);
+    const margin = w.salePrice - w.purchasePrice - exp;
+    return `<div class="card" onclick="${sm?`toggleSel('vendite','${w.id}')`:`editSale('${w.id}')`}">
+      <div class="row"><span style="display:flex;align-items:center;min-width:0;">${sm?checkDot('vendite',w.id):''}<span class="title">${w.name}</span></span><span class="amount ${margin>=0?'pos':'neg'}">${eur(margin)}</span></div>
+      <div class="meta">Acquisto: ${eur(w.purchasePrice)} (${w.purchasePlatform}) → Vendita: ${eur(w.salePrice)} (${w.salePlatform})</div>
+      <div class="meta">${profName(w.sellerProfileId)} · ${dfmt(w.saleDate)}${exp?` · spese collegate: ${eur(exp)}`:''}</div>
+    </div>`;
+  }).join('');
+}
+function editSale(id){
+  const w = watches.find(x=>x.id===id);
+  openSheet(`
+    <h3>Modifica vendita — ${w.name}</h3>
+    <label>Piattaforma di vendita</label><input id="s-plat" list="platformsList" value="${w.salePlatform}">${platformsDatalist}
+    <label>Prezzo di vendita (€)</label><input id="s-price" type="number" step="0.01" value="${w.salePrice}">
+    <label>Profilo venditore</label><select id="s-prof">${profileOptions(w.sellerProfileId)}</select>
+    <label>Data vendita</label><input id="s-date" type="date" value="${w.saleDate}">
+    <div class="btnrow">
+      <button class="ghost" onclick="closeSheet()">Annulla</button>
+      <button class="primary" onclick="confirmSale('${id}')">Salva</button>
+    </div>
+    <button class="danger" onclick="revertSale('${id}')">Riporta in Acquisti (annulla vendita)</button>
+    <button class="danger" onclick="deleteWatch('${id}')" style="margin-top:.5rem;">Elimina definitivamente</button>
+  `);
+}
+function revertSale(id){
+  const w = watches.find(x=>x.id===id);
+  w.status='stock'; delete w.salePlatform; delete w.salePrice; delete w.sellerProfileId; delete w.saleDate;
+  save.w(); closeSheet(); switchTab('acquisti');
+}
+
+// ---------- SPESE ----------
+function renderSpese(){
+  const el = document.getElementById('listSpese');
+  if(!expenses.length){ el.innerHTML='<div class="empty">Nessuna spesa registrata.<br>Tocca + per aggiungerne una.</div>'; return; }
+  const sm = selMode.spese;
+  el.innerHTML = selToolbar('spese') + [...expenses].reverse().map(e=>{
+    const w = watches.find(x=>x.id===e.watchId);
+    return `<div class="card" onclick="${sm?`toggleSel('spese','${e.id}')`:`editExpense('${e.id}')`}">
+      <div class="row"><span style="display:flex;align-items:center;min-width:0;">${sm?checkDot('spese',e.id):''}<span class="title">${e.desc}</span></span><span class="amount neg">-${eur(e.amount)}</span></div>
+      <div class="meta">${w?('Legata a: '+w.name):'Spesa generale'}${e.profileId?(' · '+profName(e.profileId)):''} · ${dfmt(e.date)}</div>
+    </div>`;
+  }).join('');
+}
+function watchOptionsForExpense(sel){
+  let opt = `<option value="">Generale (nessun orologio)</option>`;
+  opt += watches.map(w=>`<option value="${w.id}" ${w.id===sel?'selected':''}>${w.name}</option>`).join('');
+  return opt;
+}
+function expenseForm(ex){
+  const isNew=!ex;
+  ex = ex || {desc:'',amount:'',date:new Date().toISOString().slice(0,10),watchId:'',profileId:''};
+  return `
+    <h3>${isNew?'Nuova spesa':'Modifica spesa'}</h3>
+    <label>Descrizione</label><input id="e-desc" value="${ex.desc}" placeholder="Es. Spedizione, commissione, restauro">
+    <label>Importo (€)</label><input id="e-amount" type="number" step="0.01" value="${ex.amount}">
+    <label>Collegata a un orologio (opzionale)</label><select id="e-watch">${watchOptionsForExpense(ex.watchId)}</select>
+    <label>Profilo (opzionale)</label><select id="e-prof"><option value="">Nessuno</option>${profileOptions(ex.profileId)}</select>
+    <label>Data</label><input id="e-date" type="date" value="${ex.date}">
+    <div class="btnrow">
+      <button class="ghost" onclick="closeSheet()">Annulla</button>
+      <button class="primary" onclick="saveExpense('${isNew?'':ex.id}')">Salva</button>
+    </div>
+    ${!isNew?`<button class="danger" onclick="deleteExpense('${ex.id}')">Elimina spesa</button>`:''}
+  `;
+}
+function newExpense(){ openSheet(expenseForm(null)); }
+function editExpense(id){ openSheet(expenseForm(expenses.find(e=>e.id===id))); }
+function saveExpense(id){
+  const desc=document.getElementById('e-desc').value.trim();
+  if(!desc){ toast('Inserisci una descrizione.'); return; }
+  const data={ desc, amount:parseFloat(document.getElementById('e-amount').value)||0,
+    watchId:document.getElementById('e-watch').value||null, profileId:document.getElementById('e-prof').value||null,
+    date:document.getElementById('e-date').value };
+  if(id){ Object.assign(expenses.find(e=>e.id===id), data); }
+  else { expenses.push({id:uid(), ...data}); }
+  save.e(); closeSheet(); renderAll();
+}
+function deleteExpense(id){ expenses=expenses.filter(e=>e.id!==id); save.e(); closeSheet(); renderAll(); }
+
+// ---------- ORDINI ----------
+function renderOrdini(){
+  const el = document.getElementById('listOrdini');
+  if(!orders.length){ el.innerHTML='<div class="empty">Nessun ordine monitorato.<br>Tocca + per aggiungerne uno.</div>'; return; }
+  const sm = selMode.ordini;
+  el.innerHTML = selToolbar('ordini') + [...orders].reverse().map(o=>`
+    <div class="card" onclick="${sm?`toggleSel('ordini','${o.id}')`:`editOrder('${o.id}')`}">
+      <div class="row"><span style="display:flex;align-items:center;min-width:0;">${sm?checkDot('ordini',o.id):''}<span class="title">${o.desc}</span></span><span class="pill">${o.status}</span></div>
+      <div class="meta">Tracking: ${o.tracking||'—'}${o.link?` · <a class="tracklink" href="${o.link}" target="_blank" onclick="event.stopPropagation()">apri corriere ↗</a>`:''}</div>
+      <div class="meta">${dfmt(o.date)}</div>
+    </div>`).join('');
+}
+function orderForm(o){
+  const isNew=!o;
+  o = o || {desc:'',tracking:'',link:'',status:'In transito',date:new Date().toISOString().slice(0,10)};
+  return `
+    <h3>${isNew?'Nuovo ordine':'Modifica ordine'}</h3>
+    <label>Descrizione</label><input id="o-desc" value="${o.desc}" placeholder="Es. Cinturino, orologio in arrivo...">
+    <label>Numero di tracking</label><input id="o-track" value="${o.tracking}">
+    <label>Link corriere</label><input id="o-link" value="${o.link}" placeholder="https://...">
+    <label>Stato</label><input id="o-status" value="${o.status}" placeholder="Es. Spedito, in transito, consegnato">
+    <label>Data</label><input id="o-date" type="date" value="${o.date}">
+    <div class="btnrow">
+      <button class="ghost" onclick="closeSheet()">Annulla</button>
+      <button class="primary" onclick="saveOrder('${isNew?'':o.id}')">Salva</button>
+    </div>
+    ${!isNew?`<button class="danger" onclick="deleteOrder('${o.id}')">Elimina ordine</button>`:''}
+  `;
+}
+function newOrder(){ openSheet(orderForm(null)); }
+function editOrder(id){ openSheet(orderForm(orders.find(o=>o.id===id))); }
+function saveOrder(id){
+  const desc=document.getElementById('o-desc').value.trim();
+  if(!desc){ toast('Inserisci una descrizione.'); return; }
+  const data={ desc, tracking:document.getElementById('o-track').value.trim(),
+    link:document.getElementById('o-link').value.trim(), status:document.getElementById('o-status').value.trim()||'In transito',
+    date:document.getElementById('o-date').value };
+  if(id){ Object.assign(orders.find(o=>o.id===id), data); }
+  else { orders.push({id:uid(), ...data}); }
+  save.o(); closeSheet(); renderAll();
+}
+function deleteOrder(id){ orders=orders.filter(o=>o.id!==id); save.o(); closeSheet(); renderAll(); }
+
+// ---------- PROFILI ----------
+function renderProfili(){
+  const el = document.getElementById('listProfili');
+  if(!profiles.length){ el.innerHTML='<div class="empty">Nessun profilo.<br>Tocca + per crearne uno.</div>'; return; }
+  el.innerHTML = profiles.map(p=>{
+    const acquisti = watches.filter(w=>w.buyerProfileId===p.id).length;
+    return `<div class="card">
+      <div onclick="editProfile('${p.id}')">
+        <div class="title">${p.name}</div>
+        <div class="meta">${acquisti} acquisti associati</div>
+      </div>
+      <button class="ghost" style="width:100%;margin-top:.6rem;padding:.5rem;font-size:.82rem;" onclick="event.stopPropagation();openProfileStats('${p.id}')">Vedi statistiche</button>
+    </div>`;
+  }).join('');
+}
+function profileForm(p){
+  const isNew=!p; p = p || {name:''};
+  return `
+    <h3>${isNew?'Nuovo profilo':'Modifica profilo'}</h3>
+    <label>Nome</label><input id="p-name" value="${p.name}" placeholder="Es. Marco, Socio, Account 2">
+    <div class="btnrow">
+      <button class="ghost" onclick="closeSheet()">Annulla</button>
+      <button class="primary" onclick="saveProfile('${isNew?'':p.id}')">Salva</button>
+    </div>
+    ${!isNew?`<button class="danger" onclick="deleteProfile('${p.id}')">Elimina profilo</button>`:''}
+  `;
+}
+function newProfile(){ openSheet(profileForm(null)); }
+function editProfile(id){ openSheet(profileForm(profiles.find(p=>p.id===id))); }
+function saveProfile(id){
+  const name=document.getElementById('p-name').value.trim();
+  if(!name){ toast('Inserisci un nome.'); return; }
+  if(id){ profiles.find(p=>p.id===id).name=name; }
+  else { profiles.push({id:uid(), name}); }
+  save.p(); closeSheet(); renderAll();
+}
+function deleteProfile(id){
+  askConfirm('Eliminare il profilo? Gli acquisti/vendite collegati resteranno ma senza profilo.', ()=>{
+    profiles=profiles.filter(p=>p.id!==id); save.p(); renderAll();
+  });
+}
+
+// ---------- STATISTICHE ----------
+function renderStats(){
+  const sold = watches.filter(w=>w.status==='sold');
+  const byPlat={}, bySeller={};
+  sold.forEach(w=>{
+    byPlat[w.salePlatform] = byPlat[w.salePlatform] || {n:0,m:0};
+    byPlat[w.salePlatform].n++; byPlat[w.salePlatform].m += w.salePrice;
+    const sid = w.sellerProfileId||'';
+    bySeller[sid] = bySeller[sid] || {n:0,m:0};
+    bySeller[sid].n++; bySeller[sid].m += w.salePrice;
+  });
+  const totalRevenue = sold.reduce((s,w)=>s+w.salePrice,0);
+  const totalCostSold = sold.reduce((s,w)=>s+w.purchasePrice,0);
+  const totalCostAll = watches.reduce((s,w)=>s+w.purchasePrice,0);
+  const totalExpenses = expenses.reduce((s,e)=>s+e.amount,0);
+  const grossMargin = totalRevenue - totalCostSold;
+  const stockValue = watches.filter(w=>w.status!=='sold').reduce((s,w)=>s+w.purchasePrice,0);
+  const netProfit = totalRevenue - totalCostAll - totalExpenses;
+
+  const platRows = Object.entries(byPlat).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${eur(v.m)}</td></tr>`).join('');
+  const sellerRows = Object.entries(bySeller).map(([id,v])=>`<tr style="cursor:pointer;" onclick="openProfileStats('${id}')"><td>${profName(id)} ›</td><td>${v.n}</td><td>${eur(v.m)}</td></tr>`).join('');
+
+  document.getElementById('statsBody').innerHTML = `
+    <div class="stat-block">
+      <h3>Vendite per piattaforma</h3>
+      ${sold.length?`<table><tr><th>Piattaforma</th><th>Vendite</th><th>Guadagno lordo</th></tr>${platRows}</table>`:'<div class="empty">Nessuna vendita ancora.</div>'}
+    </div>
+    <div class="stat-block">
+      <h3>Guadagno per profilo di vendita</h3>
+      ${sold.length?`<table><tr><th>Profilo</th><th>Vendite</th><th>Guadagno lordo</th></tr>${sellerRows}</table><div style="font-size:.75rem;color:var(--text-dim);margin-top:.3rem;">Tocca un profilo per il dettaglio per piattaforma</div>`:'<div class="empty">Nessuna vendita ancora.</div>'}
+    </div>
+    <div class="stat-block">
+      <h3>Totali</h3>
+      <div class="stat-total"><span>Ricavi da vendite</span><span>${eur(totalRevenue)}</span></div>
+      <div class="stat-total"><span>Costo di tutti gli acquisti (venduti + in giacenza)</span><span>-${eur(totalCostAll)}</span></div>
+      <div class="stat-total"><span>Spese totali (generali + collegate)</span><span>-${eur(totalExpenses)}</span></div>
+      <div class="stat-total final"><span>Netto (di cassa)</span><span>${eur(netProfit)}</span></div>
+      <div class="stat-total" style="margin-top:.6rem;border-top:1px solid var(--border);"><span>di cui capitale ancora in magazzino</span><span>${eur(stockValue)}</span></div>
+      <div class="stat-total"><span>Margine lordo sui soli venduti (${eur(totalCostSold)} di costo)</span><span>${eur(grossMargin)}</span></div>
+    </div>
+  `;
+}
+
+// ---------- IMPOSTAZIONI / BACKUP ----------
+function openSettings(){
+  openSheet(`
+    <h3>Impostazioni</h3>
+    <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;">${mainDoc?'I dati sono salvati nel cloud dell\'artifact e sincronizzati su tutti i tuoi dispositivi.':'Salvataggio cloud non disponibile in questa vista: i dati restano solo su questo dispositivo.'} Puoi comunque esportare un backup in JSON, o importarne uno.</p>
+    <button class="primary" style="width:100%;margin-top:.6rem;" onclick="exportJSON()">Esporta backup (JSON)</button>
+    <button class="ghost" style="width:100%;margin-top:.6rem;" onclick="document.getElementById('importFile').click()">Importa backup (JSON)</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
+    <button class="ghost" style="width:100%;margin-top:.6rem;" onclick="document.getElementById('importCsvFile').click()">Importa registro CSV (formato Data;Tipo;Stato...)</button>
+    <button class="primary" style="width:100%;margin-top:.6rem;" onclick="runSeedImport(true)">Carica ora i dati storici incorporati</button>
+    <input type="file" id="importCsvFile" accept=".csv,text/csv" style="display:none" onchange="importCSVFile(event)">
+    <p style="font-size:.78rem;color:var(--text-dim);margin-top:1rem;">L'importazione aggiunge i dati del file senza cancellare quelli già presenti (elementi duplicati vengono ignorati).</p>
+    <div class="btnrow"><button class="ghost" onclick="closeSheet()">Chiudi</button></div>
+  `);
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify({watches,profiles,expenses,orders}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'backup_orologi_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function importJSON(evt){
+  const file = evt.target.files[0];
+  if(!file){ toast('Nessun file selezionato.'); return; }
+  const reader = new FileReader();
+  reader.onerror = ()=> toast('Impossibile leggere il file: '+(reader.error?reader.error.message:'errore sconosciuto'));
+  reader.onload = e=>{
+    try{
+      let data;
+      try{ data = JSON.parse(e.target.result); }
+      catch(err){ toast('Il file non è un JSON valido: '+err.message); return; }
+      if(!data || typeof data!=='object' || Array.isArray(data)){ toast('Il file non ha la struttura attesa (deve essere un oggetto con watches/profiles/expenses/orders). Trovato: '+(Array.isArray(data)?'un array':typeof data)); return; }
+      if(!data.watches && !data.profiles && !data.expenses && !data.orders){ toast('Il file JSON è valido ma non contiene nessuno dei campi attesi (watches, profiles, expenses, orders). Chiavi trovate: '+Object.keys(data).join(', ')); return; }
+      const mergeBy = (arr,inc)=>{ const ids=new Set(arr.map(x=>x.id)); let n=0; (inc||[]).forEach(x=>{ if(x && x.id && !ids.has(x.id)){ arr.push(x); ids.add(x.id); n++; } }); return n; };
+      const nP=mergeBy(profiles,data.profiles), nW=mergeBy(watches,data.watches), nE=mergeBy(expenses,data.expenses), nO=mergeBy(orders,data.orders);
+      save.p(); save.w(); save.e(); save.o();
+      closeSheet(); renderAll();
+      if(nP+nW+nE+nO===0) toast(`Nessun dato nuovo. Nel file c'erano ${(data.watches||[]).length} orologi, ${(data.profiles||[]).length} profili: risultano già tutti presenti (stessi ID).`);
+      else toast(`Importati: ${nW} orologi, ${nE} spese, ${nP} profili, ${nO} ordini.`);
+    }catch(err){
+      toast('Errore imprevisto durante l\'importazione JSON: '+(err&&err.message?err.message:err));
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+}
+function parseCSVLine(line){
+  const out=[]; let cur=''; let q=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else{ if(c==='"') q=true; else if(c===';'){ out.push(cur); cur=''; } else cur+=c; }
+  }
+  out.push(cur); return out;
+}
+function importCSVText(text){
+  text = text.replace(/^\uFEFF/,'');
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  const header = parseCSVLine(lines[0]).map(h=>h.trim());
+  const idx = n => header.indexOf(n);
+  const iData=idx('Data'), iTipo=idx('Tipo'), iStato=idx('Stato'), iProfilo=idx('Profilo'),
+        iCanale=idx('Canale'), iDesc=idx('Descrizione'), iLordo=idx('Lordo'), iSpesa=idx('Spesa'),
+        iCosto=idx('Costo'), iPV=idx('PrezzoVendita'), iDV=idx('DataVendita');
+  if(iTipo<0 || iDesc<0) throw new Error('Formato CSV non riconosciuto (intestazioni mancanti).');
+  const toDate = s => s ? s.split('T')[0] : null;
+  const wSig = new Set(watches.map(w=>[w.name,w.purchaseDate,w.purchasePrice].join('|')));
+  const eSig = new Set(expenses.map(x=>[x.desc,x.date,x.amount].join('|')));
+  let addedW=0, addedE=0, addedP=0;
+  for(let i=1;i<lines.length;i++){
+    const f = parseCSVLine(lines[i]);
+    const tipo=(f[iTipo]||'').trim(); const profilo=(f[iProfilo]||'').trim();
+    const data=toDate(f[iData]); const desc=(f[iDesc]||'').trim();
+    if(!tipo) continue;
+    if(profilo && !profiles.find(p=>p.id===profilo)){ profiles.push({id:profilo,name:profilo}); addedP++; }
+    if(tipo==='acquisto'){
+      const costo=parseFloat(f[iCosto])||0;
+      const sig=[desc,data,costo].join('|'); if(wSig.has(sig)) continue; wSig.add(sig);
+      const w={id:uid(), name:desc, purchasePlatform:'Non specificato', purchasePrice:costo, buyerProfileId:profilo, purchaseDate:data, status:'stock'};
+      if((f[iStato]||'').trim()==='venduto'){
+        w.status='sold'; w.salePlatform=(f[iCanale]||'').trim()||'Non specificato';
+        w.salePrice=parseFloat(f[iPV])||0; w.sellerProfileId=profilo; w.saleDate=toDate(f[iDV]);
+      }
+      watches.push(w); addedW++;
+    } else if(tipo==='vendita'){
+      const lordo=parseFloat(f[iLordo])||0;
+      const sig=[desc,data,0].join('|'); if(wSig.has(sig)) continue; wSig.add(sig);
+      watches.push({id:uid(), name:desc, purchasePlatform:'Non specificato', purchasePrice:0, buyerProfileId:profilo, purchaseDate:data, status:'sold', salePlatform:(f[iCanale]||'').trim()||'Non specificato', salePrice:lordo, sellerProfileId:profilo, saleDate:data});
+      addedW++;
+    } else if(tipo==='spesa'){
+      const spesa=parseFloat(f[iSpesa])||0;
+      const sig=[desc,data,spesa].join('|'); if(eSig.has(sig)) continue; eSig.add(sig);
+      expenses.push({id:uid(), desc, amount:spesa, watchId:null, profileId:profilo||null, date:data});
+      addedE++;
+    }
+  }
+  return {addedW, addedE, addedP};
+}
+function importCSVFile(evt){
+  const file = evt.target.files[0];
+  if(!file){ toast('Nessun file selezionato.'); return; }
+  const reader = new FileReader();
+  reader.onerror = ()=> toast('Impossibile leggere il file: '+(reader.error?reader.error.message:'errore sconosciuto'));
+  reader.onload = e=>{
+    try{
+      const r = importCSVText(e.target.result);
+      save.p(); save.w(); save.e();
+      closeSheet(); renderAll();
+      if(r.addedW+r.addedE+r.addedP===0) toast('Nessun dato nuovo: le righe di questo CSV erano già state importate.');
+      else toast(`Importati dal CSV: ${r.addedW} orologi/vendite, ${r.addedE} spese, ${r.addedP} nuovi profili.`);
+    }catch(err){ toast('Errore leggendo il CSV: '+err.message); console.error(err); }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+const SEED_CSV_V2 = "Data;Tipo;Stato;Profilo;Canale;Descrizione;Lordo;Spesa;Costo;PrezzoVendita;DataVendita\n2026-07-19T20:48:32.071Z;acquisto;in_vendita;E;;\"Seiko quadrato vinted\";0.00;0.00;27.44;;\n2026-07-19T20:50:04.997Z;acquisto;venduto;D;Vinted;\"Seiko Dress Spirit ebay\";0.00;0.00;39.50;90.00;2026-07-19T21:17:29.270Z\n2026-07-19T20:51:13.331Z;acquisto;venduto;D;Vinted;\"Seiko oro  e acciaio Presage\";0.00;0.00;24.69;110.00;2026-07-19T21:19:36.433Z\n2026-07-19T20:52:01.261Z;acquisto;venduto;D;Vinted;\"Seiko alba lunare\";0.00;0.00;35.00;105.00;2026-07-19T21:20:13.491Z\n2026-07-19T20:52:23.156Z;spesa;;D;;\"Armadio e boost\";0.00;13.00;;;\n2026-07-19T20:52:40.541Z;acquisto;venduto;D;Vinted;\"Seiko oro ebay yashiro\";0.00;0.00;48.50;110.00;2026-07-19T21:22:29.059Z\n2026-07-19T20:53:04.147Z;acquisto;venduto;E;Vinted;\"Raketa mercatino\";0.00;0.00;40.00;80.00;2026-07-19T21:21:33.977Z\n2026-07-19T20:53:22.553Z;spesa;;E;;\"Vetrina\";0.00;7.00;;;\n2026-07-19T20:55:00.664Z;spesa;;E;;\"Boost\";0.00;4.00;;;\n2026-07-19T20:55:13.739Z;spesa;;D;;\"Cinturini e fossil\";0.00;30.00;;;\n2026-07-19T20:55:39.973Z;spesa;;D;;\"Cinturini\";0.00;10.00;;;\n2026-07-19T20:55:59.185Z;acquisto;venduto;D;Vinted;\"Seiko Tank subito\";0.00;0.00;67.00;250.00;2026-07-19T21:23:16.940Z\n2026-07-19T20:56:15.563Z;acquisto;in_vendita;D;;\"Seiko america\";0.00;0.00;40.00;;\n2026-07-19T20:56:28.988Z;spesa;;D;;\"Boost\";0.00;6.00;;;\n2026-07-19T20:56:59.672Z;acquisto;venduto;D;Vinted;\"Seiko oro scatolato\";0.00;0.00;46.00;70.00;2026-08-22T20:07:16.120Z\n2026-07-19T20:57:36.315Z;acquisto;venduto;D;Vinted;\"Seiko Lassale subito\";0.00;0.00;66.59;110.00;2026-07-19T21:22:40.780Z\n2026-07-19T20:57:51.320Z;acquisto;venduto;D;Vinted;\"Vetta\";0.00;0.00;55.00;90.00;2026-08-22T20:07:23.098Z\n2026-07-19T21:00:26.530Z;acquisto;venduto;D;Vinted;\"Seiko ank grigio ebay\";0.00;0.00;62.00;100.00;2026-07-22T16:51:22.873Z\n2026-07-19T21:00:39.342Z;acquisto;venduto;D;Vinted;\"Citizen Tank rosso ebay\";0.00;0.00;68.00;110.00;2026-07-19T21:23:43.798Z\n2026-07-19T21:00:57.330Z;spesa;;D;;\"Cinurni pelle\";0.00;27.00;;;\n2026-07-19T21:01:12.036Z;spesa;;E;;\"Boost\";0.00;4.60;;;\n2026-07-19T21:02:13.161Z;spesa;;D;;\"Boost\";0.00;5.00;;;\n2026-07-19T21:03:03.065Z;spesa;;D;;\"Seiko manhattan\";0.00;250.00;;;\n2026-07-19T21:05:06.603Z;acquisto;venduto;D;A mano;\"Seiko box 2 presage\";0.00;0.00;70.35;110.00;2026-07-19T21:19:09.980Z\n2026-07-19T21:05:39.865Z;acquisto;venduto;E;Vinted;\"Seiko japan\";0.00;0.00;27.19;55.00;2026-07-19T21:22:52.614Z\n2026-07-19T21:17:50.839Z;vendita;;D;Vinted;\"Wintex\";20.00;0.00;;;\n2026-07-19T21:18:03.512Z;vendita;;D;Vinted;\"Lotus\";15.00;0.00;;;\n2026-07-19T21:18:18.351Z;vendita;;D;Vinted;\"Citizen rotondo\";50.00;0.00;;;\n2026-07-19T21:18:38.681Z;vendita;;D;Vinted;\"Vostok nero e blu\";40.00;0.00;;;\n2026-07-19T21:18:54.876Z;vendita;;E;Vinted;\"Vostok ramato\";60.00;0.00;;;\n2026-07-19T21:20:37.887Z;acquisto;venduto;E;Vinted;\"Alba fasi lunari\";0.00;0.00;55.00;100.00;2026-07-19T21:20:51.710Z\n2026-07-19T21:21:09.385Z;vendita;;D;Vinted;\"Collana paciotti\";25.00;0.00;;;\n2026-07-19T21:22:01.621Z;acquisto;venduto;E;Vinted;\"Seiko success\";0.00;0.00;39.31;50.00;2026-07-19T21:22:07.794Z\n2026-07-21T12:59:41.228Z;acquisto;venduto;E;Vinted;\"Seiko acciaio\";0.00;0.00;50.74;65.00;2026-07-21T12:59:49.236Z\n2026-07-22T16:49:36.230Z;acquisto;venduto;E;Vinted;\"Seiko ana digit\";0.00;0.00;44.44;110.00;2026-07-22T16:49:42.329Z\n2026-07-22T16:50:29.895Z;acquisto;venduto;E;Vinted;\"Seiko oro quadrante bianco\";0.00;0.00;47.69;70.00;2026-07-22T16:50:45.036Z\n2026-07-31T20:01:38.967Z;acquisto;venduto;D;Vinted;\"Seiko NOS circolare donna ebay\";0.00;0.00;47.00;85.00;2026-08-30T12:50:47.753Z\n2026-07-31T20:02:28.084Z;acquisto;venduto;D;Vinted;\"Citizen exceed donna yashiro\";0.00;0.00;33.00;90.00;2026-08-30T12:50:54.399Z\n2026-07-31T20:02:49.482Z;acquisto;venduto;D;Vinted;\"Seiko donna oro rotondo yashiro\";0.00;0.00;22.00;60.00;2026-09-06T07:22:20.210Z\n2026-07-31T20:03:08.713Z;acquisto;venduto;D;Subito;\"Seiko Tank oro e nero donna yashiro\";0.00;0.00;25.00;50.00;2026-09-04T07:45:18.379Z\n2026-08-05T12:41:30.949Z;acquisto;venduto;D;Subito;\"Seiko Chariot Dress yashiro oro\";0.00;0.00;36.50;85.00;2026-08-31T09:17:22.383Z\n2026-08-05T12:48:23.921Z;acquisto;venduto;D;A mano;\"Citizen Tank Slim a se mobili watchmaker ebay\";0.00;0.00;37.00;0.00;2026-09-20T10:35:59.507Z\n2026-08-05T12:49:25.356Z;acquisto;venduto;D;A mano;\"Citizen oro circolare eatchmaker\";0.00;0.00;21.00;0.00;2026-09-20T10:35:01.970Z\n2026-08-05T12:51:34.230Z;acquisto;in_vendita;D;;\"Bulova tapisserie oro acciaio watchmaker\";0.00;0.00;39.00;;\n2026-08-05T12:53:42.404Z;acquisto;venduto;D;Vinted;\"Serphil Swiss made tapisserie Watchmaker\";0.00;0.00;33.00;130.00;2026-08-25T20:12:46.299Z\n2026-08-05T12:56:56.639Z;acquisto;venduto;D;Vinted;\"Citizen Tank NOS vinted\";0.00;0.00;55.79;110.00;2026-08-20T19:19:12.615Z\n2026-08-06T23:04:23.569Z;acquisto;venduto;D;Vinted;\"Polo Ralph Lauren blu\";0.00;0.00;18.00;18.00;2026-08-06T23:04:37.437Z\n2026-08-14T06:16:43.972Z;spesa;;D;;\"Batteria retata 321\";0.00;5.00;;;\n2026-08-14T06:16:58.468Z;spesa;;D;;\"Buste spedizione\";0.00;9.00;;;\n2026-08-16T10:55:53.677Z;acquisto;venduto;D;Vinted;\"Fossil\";0.00;0.00;20.00;30.00;2026-08-16T10:56:00.433Z\n2026-08-16T10:56:40.835Z;spesa;;D;;\"Boost seiko\";0.00;3.60;;;\n2026-08-16T10:56:52.303Z;spesa;;D;;\"Buste e nastri\";0.00;3.00;;;\n2026-08-19T20:00:20.250Z;spesa;;D;;\"Boost citizen\";0.00;6.00;;;\n2026-08-20T19:18:57.671Z;vendita;;E;Vinted;\"Seiko corona blocc\";65.00;0.00;;;\n2026-08-25T20:12:14.653Z;acquisto;venduto;E;Vinted;\"Gigandet carica manuale Watchmaker\";0.00;0.00;41.00;90.00;2026-08-25T20:12:24.610Z\n2026-08-25T21:42:15.011Z;spesa;;D;;\"Boost seiko lady\";0.00;5.50;;;\n2026-08-27T20:06:39.386Z;acquisto;venduto;D;Vinted;\"Seiko tonneau\";0.00;0.00;50.00;75.00;2026-09-17T20:58:45.680Z\n2026-08-27T20:08:33.837Z;acquisto;venduto;E;Vinted;\"Mondia mistral watchmaker\";0.00;0.00;41.00;150.00;2026-08-27T20:08:57.460Z\n2026-08-27T20:09:23.577Z;acquisto;venduto;E;Vinted;\"Seiko bicolor\";0.00;0.00;52.00;55.00;2026-08-27T20:09:35.866Z\n2026-08-29T09:55:34.680Z;spesa;;E;;\"Boost citizen\";0.00;4.31;;;\n2026-08-29T10:18:58.135Z;spesa;;D;;\"Cinturini ebay\";0.00;23.00;;;\n2026-08-31T13:55:55.554Z;acquisto;venduto;E;Vinted;\"Citizen acciaio yashiro\";0.00;0.00;60.00;95.00;2026-08-31T13:56:03.308Z\n2026-09-01T17:34:02.951Z;spesa;;E;;\"Reso gigandet\";0.00;20.00;;;\n2026-09-05T09:40:28.847Z;vendita;;D;A mano;\"Casio g shock\";60.00;0.00;;;\n2026-09-05T09:40:53.381Z;vendita;;D;A mano;\"Breil\";10.00;0.00;;;\n2026-09-05T09:41:28.419Z;acquisto;in_vendita;D;;\"Citizen manuale\";0.00;0.00;120.00;;\n2026-09-06T07:20:29.616Z;acquisto;venduto;E;Vinted;\"Seiko argento ana digit\";0.00;0.00;28.49;126.00;2026-09-15T18:55:28.257Z\n2026-09-09T06:05:53.143Z;acquisto;venduto;E;Vinted;\"Citizen zigrinato vinted\";0.00;0.00;50.00;65.00;2026-09-09T06:05:59.503Z\n2026-09-09T18:54:06.823Z;spesa;;D;;\"Cinturini lucertola oro\";0.00;25.00;;;\n2026-09-09T18:54:16.720Z;spesa;;D;;\"Materiali vari\";0.00;35.00;;;\n2026-09-09T19:06:49.262Z;spesa;;D;;\"Cinturini seiko ricambio\";0.00;34.35;;;\n2026-09-09T19:34:06.781Z;spesa;;D;;\"Boost seiko tank\";0.00;6.00;;;\n2026-09-11T14:55:42.147Z;acquisto;venduto;E;Vinted;\"Seiko Tank oro mercatino\";0.00;0.00;30.00;115.00;2026-09-11T14:55:57.517Z\n2026-09-12T15:25:18.498Z;spesa;;D;;\"Boost seiko analogico digitale\";0.00;4.00;;;\n2026-09-14T06:32:54.580Z;acquisto;venduto;E;Vinted;\"Citizen oro mercatino\";0.00;0.00;40.00;60.00;2026-09-14T06:33:01.682Z\n2026-09-16T18:17:16.022Z;acquisto;in_vendita;E;;\"Citizen Tank scatolato\";0.00;0.00;77.49;;\n2026-09-16T19:54:17.463Z;spesa;;D;;\"Primo ordine zenmarket senza spedizioni\";0.00;153.57;;;\n2026-09-16T19:55:38.893Z;spesa;;D;;\"Boost seiko landy\";0.00;6.00;;;\n2026-09-16T20:45:51.295Z;acquisto;venduto;E;Vinted;\"Seiko Tank2 oro mercatino\";0.00;0.00;30.00;160.00;2026-09-16T20:46:01.220Z\n2026-09-17T17:31:28.134Z;acquisto;in_vendita;E;;\"citizen NOS tonneau\";0.00;0.00;63.70;;\n2026-09-19T19:12:03.533Z;vendita;;E;Vinted;\"Russo trinità\";120.00;0.00;;;\n2026-09-21T06:20:52.019Z;acquisto;venduto;D;Vinted;\"Seiko oro quadrante bianco pellic\";0.00;0.00;45.85;42.00;2026-09-21T06:20:58.730Z\n2026-09-21T12:53:39.450Z;acquisto;venduto;E;Vinted;\"Seiko Landy Tank\";0.00;0.00;27.50;100.00;2026-09-21T12:53:46.680Z\n2026-09-21T20:24:30.048Z;acquisto;in_vendita;D;;\"Seiko ana digit nero\";0.00;0.00;30.25;;\n2026-09-22T05:44:54.615Z;acquisto;in_vendita;E;;\"Mondia mistral donna scatolato\";0.00;0.00;34.79;;\n2026-09-23T16:27:01.963Z;acquisto;in_vendita;E;;\"Antony\";0.00;0.00;37.00;;\n2026-09-23T16:27:15.389Z;acquisto;in_vendita;D;;\"Citizen nero\";0.00;0.00;25.00;;\n2026-09-23T18:51:00.374Z;spesa;;D;;\"Secondi ordine zenmarket\";0.00;165.00;;;\n2026-09-24T09:50:44.380Z;spesa;;D;;\"Cinturini\";0.00;63.00;;;\n2026-09-25T09:45:48.639Z;acquisto;in_vendita;E;;\"Ebherard donna\";0.00;0.00;100.00;;\n2026-09-25T09:46:00.861Z;acquisto;in_vendita;E;;\"Bulova full set\";0.00;0.00;90.00;;\n2026-09-25T09:46:16.472Z;acquisto;in_vendita;E;;\"Pryngeps\";0.00;0.00;54.00;;\n2026-09-25T09:47:51.992Z;spesa;;E;;\"Ricarica per spedizioni zenmarket\";0.00;120.00;;;";
+function runSeedImport(force){
+  const KEY='w_seed_v2_done';
+  if(localStorage.getItem(KEY) && !force){ return; }
+  try{
+    const r = importCSVText(SEED_CSV_V2);
+    save.p(); save.w(); save.e();
+    localStorage.setItem(KEY,'1');
+    closeSheet(); renderAll();
+    if(r.addedW+r.addedE+r.addedP===0) toast('Import: nessun dato nuovo (già tutti presenti). Orologi totali ora: '+watches.length);
+    else toast(`Import riuscito: +${r.addedW} orologi, +${r.addedE} spese, +${r.addedP} profili.`);
+  }catch(err){
+    toast('Import automatico FALLITO: '+(err&&err.message?err.message:err));
+    console.error(err);
+  }
+}
+
+function openProfileStats(profileId){
+  const name = profName(profileId);
+  const mySold = watches.filter(w=>w.status==='sold' && w.sellerProfileId===profileId);
+  const myAll = watches.filter(w=>w.buyerProfileId===profileId);
+  const byPlat = {};
+  mySold.forEach(w=>{
+    byPlat[w.salePlatform] = byPlat[w.salePlatform] || {n:0,m:0};
+    byPlat[w.salePlatform].n++; byPlat[w.salePlatform].m += w.salePrice;
+  });
+  const rows = Object.entries(byPlat).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${eur(v.m)}</td></tr>`).join('');
+  const revenue = mySold.reduce((s,w)=>s+w.salePrice,0);
+  const costAll = myAll.reduce((s,w)=>s+w.purchasePrice,0);
+  const myExpenses = expenses.filter(e=>e.profileId===profileId).reduce((s,e)=>s+e.amount,0);
+  const stock = myAll.filter(w=>w.status!=='sold').reduce((s,w)=>s+w.purchasePrice,0);
+  const net = revenue - costAll - myExpenses;
+  openSheet(`
+    <h3>${name}</h3>
+    <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:.8rem;">${myAll.length} acquisti totali · ${mySold.length} vendite</div>
+    ${mySold.length?`<table><tr><th>Piattaforma</th><th>Vendite</th><th>Guadagno lordo</th></tr>${rows}</table>`:'<div class="empty">Nessuna vendita per questo profilo.</div>'}
+    <div class="stat-block" style="margin-top:1.1rem;">
+      <div class="stat-total"><span>Ricavi da vendite</span><span>${eur(revenue)}</span></div>
+      <div class="stat-total"><span>Costo di tutti gli acquisti</span><span>-${eur(costAll)}</span></div>
+      <div class="stat-total"><span>Spese attribuite</span><span>-${eur(myExpenses)}</span></div>
+      <div class="stat-total final"><span>Netto</span><span>${eur(net)}</span></div>
+      <div class="stat-total" style="margin-top:.5rem;border-top:1px solid var(--border);"><span>di cui in magazzino</span><span>${eur(stock)}</span></div>
+    </div>
+    <div class="btnrow"><button class="ghost" onclick="closeSheet()">Chiudi</button></div>
+  `);
+}
+function renderAll(){
+  renderAcquisti(); renderVendite(); renderSpese(); renderOrdini(); renderProfili(); renderStats();
+  const sold = watches.filter(w=>w.status==='sold').length;
+  const stock = watches.filter(w=>w.status!=='sold').length;
+  document.getElementById('headerSub').textContent = `${stock} in acquisto · ${sold} venduti · ${profiles.length} profili · build26`;
+}
+
+document.getElementById('fab').onclick = ()=>{
+  if(curTab==='acquisti') newWatch();
+  else if(curTab==='spese') newExpense();
+  else if(curTab==='ordini') newOrder();
+  else if(curTab==='profili') newProfile();
+  else if(curTab==='vendite') switchTab('acquisti');
+};
+
+initCloud();
+</script>
+</body>
+</html>
